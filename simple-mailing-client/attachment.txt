@@ -1,0 +1,9 @@
+Hello,
+
+This is a mail sent with Python.
+
+It's a good practice for today.
+
+--
+Regards,
+Nelson
