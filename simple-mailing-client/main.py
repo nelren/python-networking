@@ -10,6 +10,8 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 
+msg_to = input("Write email account to send meesage:")
+
 def login_mta(username, password):
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
@@ -24,8 +26,8 @@ def login_mta(username, password):
 #Message headers
 def compose_message():
     msg = MIMEMultipart()
-    msg['From'] = 'Nelson Allauca'
-    msg['To'] = 'nallauca@protonmail.com'
+    msg['From'] = 'Nelson Allauca' 
+    msg['To'] = msg_to
     msg['Subject'] = 'This is a test email about python.'
     return msg
 
@@ -65,7 +67,7 @@ def send_email():
         print(msg)
         msg = attach_image(msg)
         text = msg.as_string()
-        server.sendmail('Nelson Allauca', 'nallauca@protonmail.com', text)
+        server.sendmail('Nelson Allauca',msg_to, text)
         server.quit() # Close the connection
 
 if __name__ == "__main__":
