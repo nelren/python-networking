@@ -3,58 +3,70 @@
 # sure that the 2 step verification is enable (https://support.google.com/accounts/answer/185839?sjid=15619175640662600021-EU)
 # and the app password is generated (https://support.google.com/accounts/answer/185833?sjid=15619175640662600021-EU#zippy=%2Cwhy-you-may-need-an-app-password%2Capp-passwords-revoked-after-password-change)
 ##################
+
 import smtplib
 from email import encoders
-from email.mime.text import MIMEText #Ordinary test to use
-from email.mime.base import MIMEBase #For attachment
-from email.mime.multipart import MIMEMultipart #Fro the hole thing
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
 
-# Connect to the SMTP server using TLS
-server = smtplib.SMTP('smtp.gmail.com', 587)
-server.starttls()
-server.ehlo()
+def login_mta(username, password):
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.ehlo()
+    try:
+        server.login(username, password)
+        print("Login successful!")
+        return server
+    except smtplib.SMTPAuthenticationError as e:
+        print(f"Login failed. SMTP Authentication Error: {e}")
 
-with open('pass.txt', 'r') as file: #open pass.tx as "file" alias
-    password = file.read()
+#Message headers
+def compose_message():
+    msg = MIMEMultipart()
+    msg['From'] = 'Nelson Allauca'
+    msg['To'] = 'nallauca@protonmail.com'
+    msg['Subject'] = 'This is a test email about python.'
+    return msg
 
-try:
-    # Log in to the mail server
-    server.login('nelson.allauca@ecreationmedia.tv', password)
-    print("Login successful!")
-except smtplib.SMTPAuthenticationError as e:
-    print(f"Login failed. SMTP Authentication Error: {e}")
-
-#Define message (Header)
-msg = MIMEMultipart()
-msg['From'] = 'Nelson Allauca'
-msg['To'] = 'nallauca@protonmail.com'
-msg['Subject'] = 'This is a test email about python.'
-
-#Load the message
-with open('attachment.txt', 'r') as file:
-    message = file.read()
-
-print(message)
-
-# Attach something to the message
-msg.attach(MIMEText(message, 'plain'))
+# Text message to be sent
+def attach_text_message(msg):
+    with open('attachment.txt', 'r') as file:
+        message = file.read()
+    msg.attach(MIMEText(message, 'plain'))
+    return msg
 
 # Attach an image file
-img_file = 'coding.jpeg' #sometimes the whole path is needed here
+def attach_image(msg):
+    img_file = 'coding.jpeg'
+    with open(img_file, 'rb') as file:
+        img_attachment = file.read()
+    
+     #Create payload object and attach
+    payload = MIMEBase('application', 'octet-stream')
+    payload.set_payload(img_attachment)
+    encoders.encode_base64(payload) #use encoders
+    payload.add_header('Content-Disposition', f'attachment; filename={img_file}')
+    msg.attach(payload)
+    return msg
 
-img_attachment = open(img_file, 'rb') #rb = read byte codes
+#Send email to receipient
+def send_email():
+    username = 'nelson.allauca@ecreationmedia.tv'
+    with open('pass.txt', 'r') as file:
+        password = file.read().strip()
 
-#Create payload object
-payload = MIMEBase ('application','octet-stream')
-payload.set_payload (img_attachment.read())
+    server = login_mta(username, password)
 
-#use encoders
-encoders.encode_base64(payload)
-payload.add_header ('Content-Disposition', f'attachment; filename={img_file}')
-msg.attach(payload)
+    #if login is correct attach message, file and send.
+    if server:
+        msg = compose_message()
+        msg = attach_text_message(msg)
+        print(msg)
+        msg = attach_image(msg)
+        text = msg.as_string()
+        server.sendmail('Nelson Allauca', 'nallauca@protonmail.com', text)
+        server.quit() # Close the connection
 
-text = msg.as_string() #Finaly got everything as string
-server.sendmail('Nelson Allauca','nallauca@protonmail.com',text)
-
-# Close the connection
-server.quit()
+if __name__ == "__main__":
+    send_email()
